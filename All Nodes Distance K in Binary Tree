@@ -1,0 +1,202 @@
+All Nodes Distance K in Binary Tree
+Given the root of a binary tree, the value of a target node target, and an integer K, return an array of the values of all nodes that have a distance K from the target node.
+
+Note: You can return the nodes in any order. The driver code will print the nodes in sorted order.
+
+Note: You just need to implement the KDistanceNodes() function. Input and output have been handled in the driver code.
+
+Input Format
+First line contains a string representing the tree as described below. Second line contains two spaced integers, the data value of the target node and the value of K.
+
+The values in the string are in the order of level order traversal of the tree where, numbers denote node values, and a character “N” denotes NULL child.
+
+Output Format
+Print all the nodes that are at a distance of K from the target node.
+
+Example 1
+Input
+
+20 8 22 4 12 N N N N 10 14
+8 2
+Output
+
+10 14 22
+Explanation
+
+The given tree can be represented as:- 
+             20
+             / \
+            8  22
+           / \
+          4   12
+           \   /
+           10 14
+The nodes that are at a distance 2 from target node 8 are:- [22, 10, 14]
+Nodes will be printed in sorted order. 
+Example 2
+Input
+
+1 2 3 4 5 N 6 7 N N N N N N N
+2 2
+Output
+
+3 7 
+Explanation
+
+The given tree can be represented as: -
+
+             1
+            / \
+           2   3
+          / \   \
+         4   5   6
+        /   
+       7   
+The nodes that are at a distance 2 from target node 2 are [3, 7]
+Constraints
+The number of nodes in the tree is in the range [1, 500]
+
+0 <= Node.data <= 500
+
+All the values Node.data are unique.
+
+target is the value of one of the nodes in the tree.
+
+1 <= K <= 1000
+
+
+import java.util.LinkedList;
+import java.util.Queue;
+import java.io.*;
+import java.util.*;
+
+class Node {
+    int data;
+    Node left;
+    Node right;
+    Node(int data) {
+        this.data = data;
+        left = null;
+        right = null;
+    }
+}
+
+class Main {
+    static Node buildTree(String str) {
+        if (str.length() == 0 || str.charAt(0) == 'N') {
+            return null;
+        }
+        String ip[] = str.split(" ");
+        Node root = new Node(Integer.parseInt(ip[0]));
+        Queue<Node> queue = new LinkedList<>();
+        queue.add(root);
+        int i = 1;
+        while (queue.size() > 0 && i < ip.length) {
+            Node currNode = queue.peek();
+            queue.remove();
+            String currVal = ip[i];
+            if (!currVal.equals("N")) {
+                currNode.left = new Node(Integer.parseInt(currVal));
+                queue.add(currNode.left);
+            }
+            i++;
+            if (i >= ip.length)
+                break;
+            currVal = ip[i];
+            if (!currVal.equals("N")) {
+                currNode.right = new Node(Integer.parseInt(currVal));
+                queue.add(currNode.right);
+            }
+            i++;
+        }
+        return root;
+    }
+
+    public static void main(String[] args) throws IOException {
+        Scanner sc = new Scanner(System.in);
+        String s = sc.nextLine();
+        int n = sc.nextInt();
+        int K = sc.nextInt();
+        Node root = buildTree(s);
+        Solution tree = new Solution();
+        ArrayList<Integer> ans = tree.KDistanceNodes(root, n, K);
+        Collections.sort(ans);
+        for (int i = 0; i < ans.size(); ++i) {
+            System.out.print(ans.get(i) + " ");
+        }
+    }
+}
+
+class Solution {
+    public static ArrayList<Integer> KDistanceNodes(Node root, int target, int k) {
+        ArrayList<Integer> result = new ArrayList<>();
+        if (root == null) {
+            return result;
+        }
+        Map<Node, Node> parentMap = new HashMap<>();
+        Node targetNode = findTargetNodeAndParents(root, target, parentMap);
+        
+        // BFS from the target node
+        findNodesAtDistanceK(targetNode, parentMap, k, result);
+        
+        return result;
+    }
+    
+    private static Node findTargetNodeAndParents(Node root, int target, Map<Node, Node> parentMap) {
+        Queue<Node> queue = new LinkedList<>();
+        queue.add(root);
+        Node targetNode = null;
+        
+        while (!queue.isEmpty()) {
+            Node currentNode = queue.poll();
+            if (currentNode.data == target) {
+                targetNode = currentNode;
+            }
+            if (currentNode.left != null) {
+                parentMap.put(currentNode.left, currentNode);
+                queue.add(currentNode.left);
+            }
+            if (currentNode.right != null) {
+                parentMap.put(currentNode.right, currentNode);
+                queue.add(currentNode.right);
+            }
+        }
+        
+        return targetNode;
+    }
+    
+    private static void findNodesAtDistanceK(Node targetNode, Map<Node, Node> parentMap, int k, ArrayList<Integer> result) {
+        Queue<Node> queue = new LinkedList<>();
+        Set<Node> visited = new HashSet<>();
+        queue.add(targetNode);
+        visited.add(targetNode);
+        int currentLevel = 0;
+        
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            if (currentLevel == k) {
+                for (int i = 0; i < size; i++) {
+                    result.add(queue.poll().data);
+                }
+                return;
+            }
+            for (int i = 0; i < size; i++) {
+                Node currentNode = queue.poll();
+                if (currentNode.left != null && !visited.contains(currentNode.left)) {
+                    queue.add(currentNode.left);
+                    visited.add(currentNode.left);
+                }
+                if (currentNode.right != null && !visited.contains(currentNode.right)) {
+                    queue.add(currentNode.right);
+                    visited.add(currentNode.right);
+                }
+                Node parentNode = parentMap.get(currentNode);
+                if (parentNode != null && !visited.contains(parentNode)) {
+                    queue.add(parentNode);
+                    visited.add(parentNode);
+                }
+            }
+            currentLevel++;
+        }
+    }
+}
